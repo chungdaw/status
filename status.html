@@ -6,10 +6,12 @@
   <script src="https://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js"></script>
   <script>
     require([
-      "dojo/store/CsvStore", 
-      "dojo/dom", 
-      "dojo/domReady!"
-    ], function(CsvStore, dom) {
+        "dojox/data/CsvStore",
+        "dojo/_base/array",
+        "dojo/on",
+        "dojo/dom",
+        "dojo/domReady!"
+    ], function(CsvStore, arrayUtils, on, dom) {
 
       // 定義檔案 ID 與 URL
       const fileId = "1dEFGUB9I7hvb5zX3wIWM3TR2AEABjEzU"; // 使用您提供的檔案 ID
