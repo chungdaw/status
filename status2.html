@@ -1,130 +1,93 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dojo 從 Google 雲端硬碟讀取並解析 CSV</title>
-    <!-- 引入 PapaParse 用於解析 CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 18px;
-            text-align: left;
-        }
-        table th, table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        table th {
-            background-color: #f4f4f4;
-        }
-        table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        table tr:hover {
-            background-color: #f1f1f1;
-        }
-        .status-icon {
-            width: 20px;
-            height: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Status Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+  </style>
 </head>
-<body>
-    <h1>從 Google 雲端硬碟讀取並解析 CSV</h1>
-    <div id="output"></div>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-5xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold text-gray-800">服務狀態 <span class="text-black">Dashboard</span></h1>
+      <span class="text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">異常</span>
+    </div>
 
-    <script>
-        // Google Apps Script 的 URL
-        const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
-        const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
+    <!-- Status Overview -->
+    <h2 class="text-lg font-semibold mb-4">總體狀態</h2>
 
-        // 使用 fetch API 獲取 CSV 文件
-        fetch(url)
-            .then(response => response.text())
-            .then(data => {
-                // 使用 PapaParse 解析 CSV 數據
-                const parsedData = Papa.parse(data, {
-                    header: true,
-                    dynamicTyping: true
-                }).data;
+    <!-- Status Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- 動態生成卡片 -->
+    </div>
+  </div>
 
-                // 創建表格並填充數據
-                createTable(parsedData);
-            })
-            .catch(error => {
-                console.error('讀取或解析 CSV 文件時發生錯誤:', error);
-            });
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script>
+    // Google Apps Script 的 URL
+    const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
+    const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
 
-        function createTable(data) {
-            const outputDiv = document.getElementById('output');
-            const table = document.createElement('table');
+    // 使用 fetch API 獲取 CSV 文件
+    fetch(url)
+      .then(response => response.text())
+      .then(data => {
+        // 使用 PapaParse 解析 CSV 數據
+        const parsedData = Papa.parse(data, {
+          header: true,
+          dynamicTyping: true
+        }).data;
 
-            // 創建表頭
-            const headerRow = document.createElement('tr');
-            const headers = ['Service', 'Status', 'Update Time', 'Period (Minutes)'];
-            headers.forEach(headerText => {
-                const th = document.createElement('th');
-                th.textContent = headerText;
-                headerRow.appendChild(th);
-            });
-            table.appendChild(headerRow);
+        // 動態生成卡片
+        generateCards(parsedData);
+      })
+      .catch(error => {
+        console.error('讀取或解析 CSV 文件時發生錯誤:', error);
+      });
 
-            // 填充數據行
-            data.forEach(row => {
-                const tr = document.createElement('tr');
+    // 狀態顏色和圖示映射
+    const statusMap = {
+      good: { color: "green", icon: "✔️", label: "正常" },
+      warning: { color: "yellow", icon: "⚠️", label: "警告" },
+      error: { color: "red", icon: "❌", label: "中斷" },
+    };
 
-                // Service
-                const serviceCell = document.createElement('td');
-                serviceCell.textContent = row.service;
-                tr.appendChild(serviceCell);
+    // 動態生成卡片的函數
+    function generateCards(data) {
+      const container = document.querySelector(".grid"); // 卡片容器
+      container.innerHTML = ""; // 清空容器
 
-                // Status
-                const statusCell = document.createElement('td');
-                const img = document.createElement('img');
-                img.className = 'status-icon';
-                switch (row.status) {
-                    case 'good':
-                        img.src = 'https://via.placeholder.com/20/00FF00?text=%E2%9C%94';
-                        img.alt = 'Good';
-                        break;
-                    case 'average':
-                        img.src = 'https://via.placeholder.com/20/FFFF00?text=%E2%9C%94';
-                        img.alt = 'Average';
-                        break;
-                    case 'bad':
-                        img.src = 'https://via.placeholder.com/20/FF0000?text=%E2%9C%94';
-                        img.alt = 'Bad';
-                        break;
-                    default:
-                        img.src = 'https://via.placeholder.com/20/CCCCCC?text=%E2%9C%94';
-                        img.alt = 'Unknown';
-                }
-                statusCell.appendChild(img);
-                tr.appendChild(statusCell);
+      data.forEach((item) => {
+        const { service, status, updatetime, period } = item;
+        const { color, icon, label } = statusMap[status];
 
-                // Update Time
-                const updateTimeCell = document.createElement('td');
-                updateTimeCell.textContent = row.updatetime;
-                tr.appendChild(updateTimeCell);
+        // 創建卡片元素
+        const card = document.createElement("div");
+        card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
 
-                // Period
-                const periodCell = document.createElement('td');
-                periodCell.textContent = row.period;
-                tr.appendChild(periodCell);
+        // 卡片內容
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <h3 class="text-gray-700 font-semibold">${service}</h3>
+            <div class="text-${color}-500 text-2xl">${icon}</div>
+          </div>
+          <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
+            ${label}
+          </span>
+          <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime}</p>
+        `;
 
-                table.appendChild(tr);
-            });
-
-            outputDiv.appendChild(table);
-        }
-    </script>
+        // 添加卡片到容器
+        container.appendChild(card);
+      });
+    }
+  </script>
 </body>
 </html>
