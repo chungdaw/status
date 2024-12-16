@@ -16,8 +16,9 @@
   <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-5xl">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold text-gray-800">服務狀態 <span id="header-status" class="text-black">連線中</span></h1>
-      <span id="overall-status" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">連線中</span>
+      <h1 class="text-2xl font-bold text-gray-800">服務狀態 <span id="header-status" class="text-2xl font-semibold text-black bg-gray-100 rounded-full">連線中</span></h1>
+      <!-- <span id="overall-status" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">連線中</span> -->
+      <span id="last-refresh" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">上次更新時間：連線中</span>
     </div>
 
     <!-- Status Overview -->
@@ -45,9 +46,8 @@
 
     function fetchAndRender() {
       document.getElementById("header-status").textContent = "連線中";
-      document.getElementById("overall-status").textContent = "連線中";
-      document.getElementById("overall-status").className = "text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold";
       document.getElementById("last-refresh").textContent = "上次更新時間：連線中";
+      document.getElementById("last-refresh").className = "text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold";
 
       fetch(url)
         .then(response => response.text())
@@ -57,16 +57,17 @@
             dynamicTyping: true
           }).data;
 
-          const allServicesAreNormal = renderCards(parsedData);
-          document.getElementById("header-status").textContent = allServicesAreNormal ? "正常" : "異常";
-          document.getElementById("overall-status").textContent = allServicesAreNormal ? "正常" : "異常";
-          document.getElementById("overall-status").className = allServicesAreNormal
-            ? "text-green-500 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold"
-            : "text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold";
-
+          
           // 更新上次刷新時間
           const now = new Date();
           document.getElementById("last-refresh").textContent = `上次更新時間：${now.toLocaleString()}`;
+          
+          const allServicesAreNormal = renderCards(parsedData);
+          document.getElementById("header-status").textContent = allServicesAreNormal ? "正常" : "異常";
+          document.getElementById("last-refresh").textContent = `上次更新時間：${now.toLocaleString()}`;
+          //document.getElementById("last-refresh").className = allServicesAreNormal
+          //  ? "text-green-500 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold"
+          //  : "text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold";
         })
         .catch(error => {
           console.error('讀取或解析 CSV 文件時發生錯誤:', error);
