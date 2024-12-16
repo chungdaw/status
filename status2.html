@@ -141,8 +141,8 @@
     function updateLanguage() {
       document.getElementById("dashboard-title").textContent = currentLanguage === 'zh' ? "服務狀態" : "Service Status";
       document.getElementById("status-overview").innerHTML = currentLanguage === 'zh'
-        ? "服務狀態 <small id='status-icons'>可用: ✔️, 不可用: ❌, 錯誤: ⚠️</small>"
-        : "Service Status <small id='status-icons'>Available: ✔️, Unavailable: ❌, Error: ⚠️</small>";
+        ? "<small id='status-icons'>可用: ✔️, 不可用: ❌, 錯誤: ⚠️</small>"
+        : "<small id='status-icons'>Available: ✔️, Unavailable: ❌, Error: ⚠️</small>";
     }
 
     // 初始化頁面
