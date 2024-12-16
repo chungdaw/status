@@ -2,21 +2,48 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dojo 從 Google 雲端硬碟讀取並解析 CSV</title>
-    <!-- 引入最新版本的 Dojo -->
-    <script src="https://cdn.jsdelivr.net/npm/@dojo/framework@7.0.6/dist/dojo/dojo.js"></script>
     <!-- 引入 PapaParse 用於解析 CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 18px;
+            text-align: left;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        table th {
+            background-color: #f4f4f4;
+        }
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+        .status-icon {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
 </head>
 <body>
     <h1>從 Google 雲端硬碟讀取並解析 CSV</h1>
     <div id="output"></div>
 
     <script>
-        // Google 雲端硬碟上的 CSV 文件共享連結
+        // Google Apps Script 的 URL
         const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
-        //const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        //https://script.google.com/macros/s/AKfycbw5OUvbHcv_vNbZXvH7x0Nxc8qpzWc5HtOTwG3by7PVjsa6yQYVOjGeQ5iTXGoH_wBTOA/exec
         const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
 
         // 使用 fetch API 獲取 CSV 文件
@@ -27,15 +54,77 @@
                 const parsedData = Papa.parse(data, {
                     header: true,
                     dynamicTyping: true
-                });
+                }).data;
 
-                // 將解析後的數據顯示在網頁上
-                const outputDiv = document.getElementById('output');
-                outputDiv.innerHTML = '<pre>' + JSON.stringify(parsedData.data, null, 2) + '</pre>';
+                // 創建表格並填充數據
+                createTable(parsedData);
             })
             .catch(error => {
                 console.error('讀取或解析 CSV 文件時發生錯誤:', error);
             });
+
+        function createTable(data) {
+            const outputDiv = document.getElementById('output');
+            const table = document.createElement('table');
+
+            // 創建表頭
+            const headerRow = document.createElement('tr');
+            const headers = ['Service', 'Status', 'Update Time', 'Period (Minutes)'];
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // 填充數據行
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+
+                // Service
+                const serviceCell = document.createElement('td');
+                serviceCell.textContent = row.service;
+                tr.appendChild(serviceCell);
+
+                // Status
+                const statusCell = document.createElement('td');
+                const img = document.createElement('img');
+                img.className = 'status-icon';
+                switch (row.status) {
+                    case 'good':
+                        img.src = 'https://via.placeholder.com/20/00FF00?text=%E2%9C%94';
+                        img.alt = 'Good';
+                        break;
+                    case 'average':
+                        img.src = 'https://via.placeholder.com/20/FFFF00?text=%E2%9C%94';
+                        img.alt = 'Average';
+                        break;
+                    case 'bad':
+                        img.src = 'https://via.placeholder.com/20/FF0000?text=%E2%9C%94';
+                        img.alt = 'Bad';
+                        break;
+                    default:
+                        img.src = 'https://via.placeholder.com/20/CCCCCC?text=%E2%9C%94';
+                        img.alt = 'Unknown';
+                }
+                statusCell.appendChild(img);
+                tr.appendChild(statusCell);
+
+                // Update Time
+                const updateTimeCell = document.createElement('td');
+                updateTimeCell.textContent = row.updatetime;
+                tr.appendChild(updateTimeCell);
+
+                // Period
+                const periodCell = document.createElement('td');
+                periodCell.textContent = row.period;
+                tr.appendChild(periodCell);
+
+                table.appendChild(tr);
+            });
+
+            outputDiv.appendChild(table);
+        }
     </script>
 </body>
 </html>
