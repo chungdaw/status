@@ -14,9 +14,10 @@
 
     <script>
         // Google 雲端硬碟上的 CSV 文件共享連結
-        const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
+        const fileId = 'AKfycbwFCTNEMZZKD0oJak06dssi88xtRA4Co1TC1NuyDgllN7aoRbn1kn9e8ceDy6IxCxRq2Q';
         //const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        const url = `https://drive.google.com/uc?id=${fileId}`;
+        //https://script.google.com/macros/s/AKfycbwFCTNEMZZKD0oJak06dssi88xtRA4Co1TC1NuyDgllN7aoRbn1kn9e8ceDy6IxCxRq2Q/exec
+        const url = `https://script.google.com/macros/s/${fileId}Q/exec`;
 
         // 使用 fetch API 獲取 CSV 文件
         fetch(url)
