@@ -54,25 +54,30 @@
 
     // 狀態顏色和圖示映射
     const statusMap = {
-      good: { color: "green", icon: "✔️", label: "正常" },
-      warning: { color: "yellow", icon: "⚠️", label: "警告" },
-      error: { color: "red", icon: "❌", label: "中斷" },
+      AVAILABLE: { color: "green", icon: "✔️", label: "可用" },
+      UNAVAILABLE: { color: "red", icon: "❌", label: "不可用" },
+      ERROR: { color: "yellow", icon: "⚠️", label: "錯誤" },
     };
 
     // 動態生成卡片的函數
     function generateCards(data) {
       const container = document.querySelector(".grid"); // 卡片容器
       container.innerHTML = ""; // 清空容器
-    
+
       data.forEach((item) => {
-        const { service, status, updatetime, period } = item;
-        const defaultStatus = { color: "gray", icon: "❔", label: "未知" }; // 默認狀態
+        const service = item["service name"] || "未定義服務";
+        const status = item["status"] || "未知";
+        const updatetime = item["updatetime"] || "未知時間";
+        const period = item["period"] || "未知";
+
+        // 狀態映射
+        const defaultStatus = { color: "gray", icon: "❔", label: "未知" };
         const { color, icon, label } = statusMap[status] || defaultStatus;
-    
+
         // 創建卡片元素
         const card = document.createElement("div");
         card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
-    
+
         // 卡片內容
         card.innerHTML = `
           <div class="flex items-center justify-between">
@@ -82,14 +87,13 @@
           <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
             ${label}
           </span>
-          <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime}</p>
+          <p class="text-gray-500 text-sm mt-1">最後更新: ${new Date(updatetime).toLocaleString()}</p>
         `;
-    
+
         // 添加卡片到容器
         container.appendChild(card);
       });
     }
-
   </script>
 </body>
 </html>
