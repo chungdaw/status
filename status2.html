@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Dojo 從 Google 雲端硬碟讀取並解析 CSV</title>
+    <!-- 引入最新版本的 Dojo -->
+    <script src="https://cdn.jsdelivr.net/npm/@dojo/framework@7.0.6/dist/dojo/dojo.js"></script>
+    <!-- 引入 PapaParse 用於解析 CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+    <h1>從 Google 雲端硬碟讀取並解析 CSV</h1>
+    <div id="output"></div>
+
+    <script>
+        // Google 雲端硬碟上的 CSV 文件共享連結
+        const fileId = '1dEFGUB9I7hvb5zX3wIWM3TR2AEABjEzU';
+        const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+        // 使用 fetch API 獲取 CSV 文件
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                // 使用 PapaParse 解析 CSV 數據
+                const parsedData = Papa.parse(data, {
+                    header: true,
+                    dynamicTyping: true
+                });
+
+                // 將解析後的數據顯示在網頁上
+                const outputDiv = document.getElementById('output');
+                outputDiv.innerHTML = '<pre>' + JSON.stringify(parsedData.data, null, 2) + '</pre>';
+            })
+            .catch(error => {
+                console.error('讀取或解析 CSV 文件時發生錯誤:', error);
+            });
+    </script>
+</body>
+</html>
