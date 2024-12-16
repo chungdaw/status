@@ -29,111 +29,90 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@dojo/framework@7.0.6/dist/dojo/dojo.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
-      const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
+    const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
+    const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
 
-      const statusMap = {
-        AVAILABLE: { color: "green", icon: "✔️", label: "可用" },
-        UNAVAILABLE: { color: "red", icon: "❌", label: "不可用" },
-        ERROR: { color: "yellow", icon: "⚠️", label: "錯誤" },
-      };
+    const statusMap = {
+      AVAILABLE: { color: "green", icon: "✔️", label: "可用" },
+      UNAVAILABLE: { color: "red", icon: "❌", label: "不可用" },
+      ERROR: { color: "yellow", icon: "⚠️", label: "錯誤" },
+    };
 
-      async function fetchAndRender() {
-        const headerStatus = document.getElementById("header-status");
-        const overallStatus = document.getElementById("overall-status");
+    function fetchAndRender() {
+      document.getElementById("header-status").textContent = "連線中";
+      document.getElementById("overall-status").textContent = "連線中";
+      document.getElementById("overall-status").className = "text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold";
 
-        if (headerStatus) {
-          headerStatus.textContent = "連線中";
-        }
-
-        if (overallStatus) {
-          overallStatus.textContent = "連線中";
-          overallStatus.className = "text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold";
-        }
-
-        try {
-          const response = await fetch(url);
-          const text = await response.text();
-          const parsedData = parseCSVWithDojo(text);
+      fetch(url)
+        .then(response => response.text())
+        .then(data => {
+          const parsedData = Papa.parse(data, {
+            header: true,
+            dynamicTyping: true
+          }).data;
 
           const allServicesAreNormal = renderCards(parsedData);
-
-          if (headerStatus) {
-            headerStatus.textContent = allServicesAreNormal ? "正常" : "異常";
-          }
-
-          if (overallStatus) {
-            overallStatus.textContent = allServicesAreNormal ? "正常" : "異常";
-            overallStatus.className = allServicesAreNormal
-              ? "text-green-500 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold"
-              : "text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold";
-          }
-        } catch (error) {
+          document.getElementById("header-status").textContent = allServicesAreNormal ? "正常" : "異常";
+          document.getElementById("overall-status").textContent = allServicesAreNormal ? "正常" : "異常";
+          document.getElementById("overall-status").className = allServicesAreNormal
+            ? "text-green-500 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold"
+            : "text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold";
+        })
+        .catch(error => {
           console.error('讀取或解析 CSV 文件時發生錯誤:', error);
+        });
+    }
+
+    function renderCards(data) {
+      const container = document.querySelector(".grid");
+      container.innerHTML = "";
+
+      let allServicesAreNormal = true;
+
+      data.forEach((item) => {
+        const service = item["service name"] || "未定義服務";
+        const status = item["status"] || "未知";
+        const updatetime = new Date(item["updatetime"]);
+        const period = item["period"] || 0;
+
+        // 計算是否超過允許時間範圍
+        const now = new Date();
+        const isError = now - updatetime > period * 60 * 1000;
+
+        const displayStatus = isError ? "ERROR" : status;
+        if (isError) {
+          allServicesAreNormal = false;
         }
-      }
 
-      function parseCSVWithDojo(csvText) {
-        const rows = csvText.split('\\n').filter(row => row.trim() !== "");
-        const header = rows[0].split(',').map(h => h.trim());
-        const data = rows.slice(1).map(row => {
-          const values = row.split(',').map(v => v.trim());
-          return header.reduce((acc, key, index) => {
-            acc[key] = values[index];
-            return acc;
-          }, {});
-        });
-        return data;
-      }
+        const { color, icon, label } = statusMap[displayStatus] || { color: "gray", icon: "❔", label: "未知" };
 
-      function renderCards(data) {
-        const container = document.querySelector(".grid");
-        container.innerHTML = "";
+        const card = document.createElement("div");
+        card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
 
-        let allServicesAreNormal = true;
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <h3 class="text-gray-700 font-semibold">${service}</h3>
+            <div class="text-${color}-500 text-2xl">${icon}</div>
+          </div>
+          <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
+            ${label}
+          </span>
+          <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime.toLocaleString()}</p>
+        `;
 
-        data.forEach((item) => {
-          const service = item["service name"] || "未定義服務";
-          const status = item["status"] || "未知";
-          const updatetime = new Date(item["updatetime"]);
-          const period = item["period"] || 0;
+        container.appendChild(card);
+      });
 
-          const now = new Date();
-          const isError = now - updatetime > period * 60 * 1000;
+      return allServicesAreNormal;
+    }
 
-          const displayStatus = isError ? "ERROR" : status;
-          if (isError) {
-            allServicesAreNormal = false;
-          }
+    // 初始化頁面
+    fetchAndRender();
 
-          const { color, icon, label } = statusMap[displayStatus] || { color: "gray", icon: "❔", label: "未知" };
-
-          const card = document.createElement("div");
-          card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
-
-          card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <h3 class="text-gray-700 font-semibold">${service}</h3>
-              <div class="text-${color}-500 text-2xl">${icon}</div>
-            </div>
-            <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
-              ${label}
-            </span>
-            <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime.toLocaleString()}</p>
-          `;
-
-          container.appendChild(card);
-        });
-
-        return allServicesAreNormal;
-      }
-
-      fetchAndRender();
-      setInterval(fetchAndRender, 60000);
-    });
+    // 每分鐘更新一次
+    setInterval(fetchAndRender, 60000);
   </script>
 </body>
 </html>
