@@ -1,99 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Service Status Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
-  <style>
-    body {
-      font-family: 'Noto Sans TC', sans-serif;
+<script src="https://cdn.jsdelivr.net/npm/@dojo/framework@7.0.6/dist/dojo/dojo.js"></script>
+<script>
+  const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
+  const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
+
+  const statusMap = {
+    AVAILABLE: { color: "green", icon: "✔️", label: "可用" },
+    UNAVAILABLE: { color: "red", icon: "❌", label: "不可用" },
+    ERROR: { color: "yellow", icon: "⚠️", label: "錯誤" },
+  };
+
+  async function fetchAndRender() {
+    document.getElementById("header-status").textContent = "連線中";
+    document.getElementById("overall-status").textContent = "連線中";
+    document.getElementById("overall-status").className = "text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold";
+
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+      const parsedData = parseCSVWithDojo(text);
+
+      const allServicesAreNormal = renderCards(parsedData);
+      document.getElementById("header-status").textContent = allServicesAreNormal ? "正常" : "異常";
+      document.getElementById("overall-status").textContent = allServicesAreNormal ? "正常" : "異常";
+      document.getElementById("overall-status").className = allServicesAreNormal
+        ? "text-green-500 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold"
+        : "text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold";
+    } catch (error) {
+      console.error('讀取或解析 CSV 文件時發生錯誤:', error);
     }
-  </style>
-</head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-  <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-5xl">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold text-gray-800">服務狀態 <span class="text-black">Dashboard</span></h1>
-      <span class="text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">異常</span>
-    </div>
+  }
 
-    <!-- Status Overview -->
-    <h2 class="text-lg font-semibold mb-4">總體狀態</h2>
+  function parseCSVWithDojo(csvText) {
+    const rows = csvText.split('\n');
+    const header = rows[0].split(',').map(h => h.trim());
+    const data = rows.slice(1).map(row => {
+      const values = row.split(',').map(v => v.trim());
+      return header.reduce((acc, key, index) => {
+        acc[key] = values[index];
+        return acc;
+      }, {});
+    });
+    return data;
+  }
 
-    <!-- Status Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- 動態生成卡片 -->
-    </div>
-  </div>
+  function renderCards(data) {
+    const container = document.querySelector(".grid");
+    container.innerHTML = "";
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-  <script>
-    // Google Apps Script 的 URL
-    const fileId = '1zqvU7QwcYATY4DnUH1GsuFnhPunQMI4A';
-    const url = `https://script.google.com/macros/s/AKfycbzuZTVtv2fK_qVFfoE4_1EbN5f5_mB6XVxhTe-VAqkX6nYWd2aEayFQhsLlb69acXhR4Q/exec?fileId=${fileId}`;
+    let allServicesAreNormal = true;
 
-    // 使用 fetch API 獲取 CSV 文件
-    fetch(url)
-      .then(response => response.text())
-      .then(data => {
-        // 使用 PapaParse 解析 CSV 數據
-        const parsedData = Papa.parse(data, {
-          header: true,
-          dynamicTyping: true
-        }).data;
+    data.forEach((item) => {
+      const service = item["service name"] || "未定義服務";
+      const status = item["status"] || "未知";
+      const updatetime = new Date(item["updatetime"]);
+      const period = item["period"] || 0;
 
-        // 動態生成卡片
-        generateCards(parsedData);
-      })
-      .catch(error => {
-        console.error('讀取或解析 CSV 文件時發生錯誤:', error);
-      });
+      const now = new Date();
+      const isError = now - updatetime > period * 60 * 1000;
 
-    // 狀態顏色和圖示映射
-    const statusMap = {
-      AVAILABLE: { color: "green", icon: "✔️", label: "可用" },
-      UNAVAILABLE: { color: "red", icon: "❌", label: "不可用" },
-      ERROR: { color: "yellow", icon: "⚠️", label: "錯誤" },
-    };
+      const displayStatus = isError ? "ERROR" : status;
+      if (isError) {
+        allServicesAreNormal = false;
+      }
 
-    // 動態生成卡片的函數
-    function generateCards(data) {
-      const container = document.querySelector(".grid"); // 卡片容器
-      container.innerHTML = ""; // 清空容器
+      const { color, icon, label } = statusMap[displayStatus] || { color: "gray", icon: "❔", label: "未知" };
 
-      data.forEach((item) => {
-        const service = item["service name"] || "未定義服務";
-        const status = item["status"] || "未知";
-        const updatetime = item["updatetime"] || "未知時間";
-        const period = item["period"] || "未知";
+      const card = document.createElement("div");
+      card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
 
-        // 狀態映射
-        const defaultStatus = { color: "gray", icon: "❔", label: "未知" };
-        const { color, icon, label } = statusMap[status] || defaultStatus;
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <h3 class="text-gray-700 font-semibold">${service}</h3>
+          <div class="text-${color}-500 text-2xl">${icon}</div>
+        </div>
+        <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
+          ${label}
+        </span>
+        <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime.toLocaleString()}</p>
+      `;
 
-        // 創建卡片元素
-        const card = document.createElement("div");
-        card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
+      container.appendChild(card);
+    });
 
-        // 卡片內容
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <h3 class="text-gray-700 font-semibold">${service}</h3>
-            <div class="text-${color}-500 text-2xl">${icon}</div>
-          </div>
-          <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
-            ${label}
-          </span>
-          <p class="text-gray-500 text-sm mt-1">最後更新: ${new Date(updatetime).toLocaleString()}</p>
-        `;
+    return allServicesAreNormal;
+  }
 
-        // 添加卡片到容器
-        container.appendChild(card);
-      });
-    }
-  </script>
-</body>
-</html>
+  fetchAndRender();
+  setInterval(fetchAndRender, 60000);
+</script>
