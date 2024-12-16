@@ -24,7 +24,7 @@
     </div>
 
     <!-- Status Overview -->
-    <h2 class="text-lg font-semibold mb-4" id="status-overview">服務狀態
+    <h2 class="text-lg font-semibold mb-4" id="status-overview">
       <small id="status-icons">可用: ✔️, 不可用: ❌, 錯誤: ⚠️</small>
     </h2>
     <!-- <span id="last-refresh" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">上次更新時間：連線中</span> -->
@@ -66,10 +66,10 @@
           //  ? `上次更新時間：${now.toLocaleString()}`
           //  : `Last refresh: ${now.toLocaleString()}`;
 
-          const allServicesAreNormal = renderCards(parsedData);
-          document.getElementById("header-status").textContent = allServicesAreNormal
-            ? (currentLanguage === 'zh' ? "正常" : "Normal")
-            : (currentLanguage === 'zh' ? "異常" : "Abnormal");
+          //const allServicesAreNormal = renderCards(parsedData);
+          //document.getElementById("header-status").textContent = allServicesAreNormal
+          //  ? (currentLanguage === 'zh' ? "正常" : "Normal")
+          //  : (currentLanguage === 'zh' ? "異常" : "Abnormal");
         })
         .catch(error => {
           console.error('讀取或解析 CSV 文件時發生錯誤:', error);
@@ -110,7 +110,7 @@
           <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
             ${label[currentLanguage]}
           </span>
-          <p class="text-gray-500 text-sm mt-1">${currentLanguage === 'zh' ? "最後更新:" : "Last updated:"} ${updatetime.toLocaleString()}</p>
+          <p class="text-gray-500 text-sm mt-1">${currentLanguage === 'zh' ? "狀態更新時間:" : "Status Update Time:"} ${updatetime.toLocaleString()}</p>
         `;
 
         container.appendChild(card);
