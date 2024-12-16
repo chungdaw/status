@@ -63,15 +63,16 @@
     function generateCards(data) {
       const container = document.querySelector(".grid"); // 卡片容器
       container.innerHTML = ""; // 清空容器
-
+    
       data.forEach((item) => {
         const { service, status, updatetime, period } = item;
-        const { color, icon, label } = statusMap[status];
-
+        const defaultStatus = { color: "gray", icon: "❔", label: "未知" }; // 默認狀態
+        const { color, icon, label } = statusMap[status] || defaultStatus;
+    
         // 創建卡片元素
         const card = document.createElement("div");
         card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
-
+    
         // 卡片內容
         card.innerHTML = `
           <div class="flex items-center justify-between">
@@ -83,11 +84,12 @@
           </span>
           <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime}</p>
         `;
-
+    
         // 添加卡片到容器
         container.appendChild(card);
       });
     }
+
   </script>
 </body>
 </html>
