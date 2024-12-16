@@ -16,16 +16,18 @@
   <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-5xl">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold text-gray-800">服務狀態 <span id="header-status" class="text-2xl font-semibold text-black bg-gray-100 rounded-full">連線中</span></h1>
-      <!-- <span id="overall-status" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">連線中</span> -->
-      <span id="last-refresh" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">上次更新時間：連線中</span>
+      <h1 class="text-2xl font-bold text-gray-800"><span id="dashboard-title">服務狀態</span> <span id="header-status" class="text-2xl font-semibold text-black bg-gray-100 rounded-full">連線中</span></h1>
+      <div>
+        <button id="lang-zh" class="px-3 py-1 bg-blue-500 text-white rounded mr-2">中文</button>
+        <button id="lang-en" class="px-3 py-1 bg-gray-200 text-black rounded">English</button>
+      </div>
     </div>
 
     <!-- Status Overview -->
-   <h2 class="text-lg font-semibold mb-4">服務狀態
-      <small>可用: ✔️, 不可用: ❌, 錯誤: ⚠️</small>
-   </h2>
-   <!-- <p id="last-refresh" class="text-sm text-gray-500 mb-4">上次更新時間：連線中</p> -->
+    <h2 class="text-lg font-semibold mb-4" id="status-overview">服務狀態
+      <small id="status-icons">可用: ✔️, 不可用: ❌, 錯誤: ⚠️</small>
+    </h2>
+    <span id="last-refresh" class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">上次更新時間：連線中</span>
 
     <!-- Status Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -39,15 +41,16 @@
     const url = `https://script.google.com/macros/s/AKfycby0KdnH9pes7G5HLWgmpVBlXX0Ezi-IY5Iueg7mwVg20W0Irt-jw5Nd4YS0JgqqPf4/exec?fileId=${fileId}`;
 
     const statusMap = {
-      AVAILABLE: { color: "green", icon: "✔️", label: "可用" },
-      UNAVAILABLE: { color: "red", icon: "❌", label: "不可用" },
-      ERROR: { color: "yellow", icon: "⚠️", label: "錯誤" },
+      AVAILABLE: { color: "green", icon: "✔️", label: { zh: "可用", en: "Available" } },
+      UNAVAILABLE: { color: "red", icon: "❌", label: { zh: "不可用", en: "Unavailable" } },
+      ERROR: { color: "yellow", icon: "⚠️", label: { zh: "錯誤", en: "Error" } },
     };
 
+    let currentLanguage = 'zh';
+
     function fetchAndRender() {
-      document.getElementById("header-status").textContent = "連線中";
-      document.getElementById("last-refresh").textContent = "上次更新時間：連線中";
-      document.getElementById("last-refresh").className = "text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold";
+      document.getElementById("header-status").textContent = currentLanguage === 'zh' ? "連線中" : "Connecting";
+      document.getElementById("last-refresh").textContent = currentLanguage === 'zh' ? "上次更新時間：連線中" : "Last refresh: Connecting";
 
       fetch(url)
         .then(response => response.text())
@@ -57,17 +60,16 @@
             dynamicTyping: true
           }).data;
 
-          
           // 更新上次刷新時間
           const now = new Date();
-          document.getElementById("last-refresh").textContent = `上次更新時間：${now.toLocaleString()}`;
-          
+          document.getElementById("last-refresh").textContent = currentLanguage === 'zh'
+            ? `上次更新時間：${now.toLocaleString()}`
+            : `Last refresh: ${now.toLocaleString()}`;
+
           const allServicesAreNormal = renderCards(parsedData);
-          document.getElementById("header-status").textContent = allServicesAreNormal ? "正常" : "異常";
-          document.getElementById("last-refresh").textContent = `上次更新時間：${now.toLocaleString()}`;
-          //document.getElementById("last-refresh").className = allServicesAreNormal
-          //  ? "text-green-500 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold"
-          //  : "text-red-500 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold";
+          document.getElementById("header-status").textContent = allServicesAreNormal
+            ? (currentLanguage === 'zh' ? "正常" : "Normal")
+            : (currentLanguage === 'zh' ? "異常" : "Abnormal");
         })
         .catch(error => {
           console.error('讀取或解析 CSV 文件時發生錯誤:', error);
@@ -81,7 +83,7 @@
       let allServicesAreNormal = true;
 
       data.forEach((item) => {
-        const service = item["service name"] || "未定義服務";
+        const service = item["service name"] || (currentLanguage === 'zh' ? "未定義服務" : "Undefined Service");
         const status = item["status"] || "未知";
         const updatetime = new Date(item["updatetime"]);
         const period = item["period"] || 0;
@@ -95,7 +97,7 @@
           allServicesAreNormal = false;
         }
 
-        const { color, icon, label } = statusMap[displayStatus] || { color: "gray", icon: "❔", label: "未知" };
+        const { color, icon, label } = statusMap[displayStatus] || { color: "gray", icon: "❔", label: { zh: "未知", en: "Unknown" } };
 
         const card = document.createElement("div");
         card.className = `p-4 border rounded-lg shadow-sm hover:shadow-md transition`;
@@ -106,15 +108,39 @@
             <div class="text-${color}-500 text-2xl">${icon}</div>
           </div>
           <span class="text-sm bg-${color}-100 text-${color}-700 px-2 py-1 rounded-full font-medium inline-block mt-2">
-            ${label}
+            ${label[currentLanguage]}
           </span>
-          <p class="text-gray-500 text-sm mt-1">最後更新: ${updatetime.toLocaleString()}</p>
+          <p class="text-gray-500 text-sm mt-1">${currentLanguage === 'zh' ? "最後更新:" : "Last updated:"} ${updatetime.toLocaleString()}</p>
         `;
 
         container.appendChild(card);
       });
 
       return allServicesAreNormal;
+    }
+
+    // 切換語言功能
+    document.getElementById("lang-zh").addEventListener("click", () => {
+      currentLanguage = 'zh';
+      document.getElementById("lang-zh").className = "px-3 py-1 bg-blue-500 text-white rounded mr-2";
+      document.getElementById("lang-en").className = "px-3 py-1 bg-gray-200 text-black rounded";
+      updateLanguage();
+      fetchAndRender();
+    });
+
+    document.getElementById("lang-en").addEventListener("click", () => {
+      currentLanguage = 'en';
+      document.getElementById("lang-zh").className = "px-3 py-1 bg-gray-200 text-black rounded mr-2";
+      document.getElementById("lang-en").className = "px-3 py-1 bg-blue-500 text-white rounded";
+      updateLanguage();
+      fetchAndRender();
+    });
+
+    function updateLanguage() {
+      document.getElementById("dashboard-title").textContent = currentLanguage === 'zh' ? "服務狀態" : "Service Status";
+      document.getElementById("status-overview").innerHTML = currentLanguage === 'zh'
+        ? "服務狀態 <small id='status-icons'>可用: ✔️, 不可用: ❌, 錯誤: ⚠️</small>"
+        : "Service Status <small id='status-icons'>Available: ✔️, Unavailable: ❌, Error: ⚠️</small>";
     }
 
     // 初始化頁面
